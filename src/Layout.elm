@@ -1,9 +1,9 @@
 module Layout exposing (mainLayout)
 
+import Alert exposing (AlertParams)
 import Css exposing (..)
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (attribute, class, classList, href, id, type_)
-import Misc exposing (AlertParams, getAlertClass)
+import Html.Styled.Attributes exposing (attribute, class, href, id, type_)
 
 
 navbar : Html msg
@@ -40,29 +40,8 @@ mainLayout inner alerts =
         [ class "d-flex flex-column h-100"
         ]
         [ navbar
-        , div [ class "container mt-2" ] (List.map viewAlert alerts)
+        , div [ class "container mt-2" ] (List.map Alert.view alerts)
         , div
             [ class "flex-grow-1" ]
             [ inner ]
-        ]
-
-
-viewAlert : AlertParams -> Html msg
-viewAlert alert =
-    div
-        [ class (String.join " " [ "alert", getAlertClass alert ])
-        , classList [ ( "alert-dismissible", alert.dismissable ) ]
-        ]
-        [ text alert.message
-        , if alert.dismissable then
-            button
-                [ class "btn-close"
-                , type_ "button"
-                , attribute "data-bs-dismiss" "alert"
-                , attribute "aria-label" "Close"
-                ]
-                []
-
-          else
-            text ""
         ]

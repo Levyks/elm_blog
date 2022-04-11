@@ -1,16 +1,18 @@
 module Login exposing (main)
 
+import Alert exposing (AlertParams, AlertType(..))
 import Browser
 import Css exposing (..)
+import Form
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (class, css)
-import Html.Styled.Events exposing (onClick, onSubmit)
+import Html.Styled.Events exposing (onSubmit)
 import Http
 import Http.Detailed
+import HttpHelper exposing (apiUrl, getHttpErrorMessage)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Layout exposing (mainLayout)
-import Misc exposing (AlertParams, AlertType(..), apiUrl, formInput, getHttpErrorMessage)
 
 
 type alias Model =
@@ -53,7 +55,7 @@ formCard model =
                 [ h2 [ class "m-0" ] [ text "Login" ]
                 ]
             , div [ class "card-body" ]
-                [ formInput
+                [ Form.input
                     { label = "E-mail"
                     , id = "email"
                     , type_ = "email"
@@ -62,7 +64,7 @@ formCard model =
                     , disabled = model.loading
                     , onInput = HandleEmailInput
                     }
-                , formInput
+                , Form.input
                     { label = "Password"
                     , id = "password"
                     , type_ = "password"
@@ -136,7 +138,6 @@ type Msg
     = HandleEmailInput String
     | HandlePasswordInput String
     | HandleSubmit
-    | HandleErrorAlertClose
     | SubmitResultReceived (Result (Http.Detailed.Error String) ( Http.Metadata, LoginSuccessfulResult ))
 
 
@@ -173,13 +174,10 @@ update message model =
         HandlePasswordInput password ->
             ( { model | password = password }, Cmd.none )
 
-        HandleErrorAlertClose ->
-            ( { model | error = Nothing }, Cmd.none )
-
         HandleSubmit ->
             ( { model | loading = True, error = Nothing }, submitLogin model )
 
-        SubmitResultReceived (Ok ( _, body )) ->
+        SubmitResultReceived (Ok ( _, _ )) ->
             -- TODO: Store token in local storage
             ( { model | loading = False }, Cmd.none )
 
