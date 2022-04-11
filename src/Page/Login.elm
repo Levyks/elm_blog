@@ -181,8 +181,4 @@ update message model =
             ( { model | loading = False, error = Just (getHttpErrorMessage err) }, Cmd.none )
 
         HandleErrorClosed ->
-            let
-                _ =
-                    Debug.log "teste" "teste"
-            in
             ( model, Cmd.none )

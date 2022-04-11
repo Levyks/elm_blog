@@ -96,9 +96,6 @@ buttons pag =
     let
         params =
             getPageBtnsParams pag
-
-        _ =
-            Debug.log "pageBtnsParams" params
     in
     nav []
         [ ul [ class "pagination justify-content-center mt-3" ]
