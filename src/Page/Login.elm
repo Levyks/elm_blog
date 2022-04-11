@@ -8,10 +8,11 @@ import Html.Styled.Attributes exposing (class, css)
 import Html.Styled.Events exposing (onSubmit)
 import Http
 import Http.Detailed
-import HttpHelper exposing (apiUrl, getHttpErrorMessage)
+import HttpHelper exposing (apiEndpoint, getHttpErrorMessage)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Layout exposing (mainLayout)
+import UI exposing (viewSpinner)
 
 
 type alias Model =
@@ -82,19 +83,7 @@ formCard model =
                     , Html.Styled.Attributes.disabled model.loading
                     ]
                     [ if model.loading then
-                        div
-                            [ class "spinner-border me-2"
-                            , css
-                                [ width (px 20)
-                                , height (px 20)
-                                , fontSize (rem 0.75)
-                                ]
-                            ]
-                            [ span
-                                [ class "visually-hidden"
-                                ]
-                                [ text "Loading..." ]
-                            ]
+                        viewSpinner 4 0.75
 
                       else
                         text ""
@@ -105,14 +94,14 @@ formCard model =
         ]
 
 
-getAlertsList : Model -> List AlertParams
+getAlertsList : Model -> List (AlertParams Msg)
 getAlertsList model =
     case model.error of
         Nothing ->
             []
 
         Just msg ->
-            [ AlertParams Danger msg True ]
+            [ AlertParams Danger msg True False (Just HandleErrorClosed) ]
 
 
 title : String
@@ -145,6 +134,7 @@ type Msg
     | HandlePasswordInput String
     | HandleSubmit
     | SubmitResultReceived (Result (Http.Detailed.Error String) ( Http.Metadata, LoginSuccessfulResult ))
+    | HandleErrorClosed
 
 
 requestEncoder : Model -> Encode.Value
@@ -165,7 +155,7 @@ resultDecoder =
 submitLogin : Model -> Cmd Msg
 submitLogin model =
     Http.post
-        { url = apiUrl ++ "/auth/login"
+        { url = apiEndpoint "/auth/login"
         , body = Http.jsonBody <| requestEncoder model
         , expect = Http.Detailed.expectJson SubmitResultReceived resultDecoder
         }
@@ -189,3 +179,10 @@ update message model =
 
         SubmitResultReceived (Err err) ->
             ( { model | loading = False, error = Just (getHttpErrorMessage err) }, Cmd.none )
+
+        HandleErrorClosed ->
+            let
+                _ =
+                    Debug.log "teste" "teste"
+            in
+            ( model, Cmd.none )

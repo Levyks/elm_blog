@@ -4,6 +4,7 @@ import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Css exposing (url)
 import Html.Styled as Html
+import Page.ListPosts as ListPosts
 import Page.Login as Login
 import Route exposing (Route(..))
 import Url exposing (Url)
@@ -19,7 +20,7 @@ type alias Model =
 
 type Page
     = NotFoundPage
-    | HomePage
+    | ListPostsPage ListPosts.Model
     | LoginPage Login.Model
 
 
@@ -27,6 +28,7 @@ type Msg
     = LinkClicked UrlRequest
     | UrlChanged Url
     | LoginPageMsg Login.Msg
+    | ListPostsPageMsg ListPosts.Msg
 
 
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -37,8 +39,12 @@ initCurrentPage ( model, existingCmds ) =
                 Route.NotFound ->
                     ( NotFoundPage, Cmd.none, "Not Found" )
 
-                Route.Home ->
-                    ( HomePage, Cmd.none, "Home" )
+                Route.ListPosts page ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            ListPosts.init page
+                    in
+                    ( ListPostsPage pageModel, Cmd.map ListPostsPageMsg pageCmds, ListPosts.title )
 
                 Route.Login ->
                     let
@@ -78,8 +84,8 @@ currentView model =
         NotFoundPage ->
             Html.text "404"
 
-        HomePage ->
-            Html.text "Home"
+        ListPostsPage pageModel ->
+            ListPosts.view pageModel |> Html.map ListPostsPageMsg
 
         LoginPage pageModel ->
             Login.view pageModel |> Html.map LoginPageMsg
@@ -101,8 +107,12 @@ update msg model =
                 newRoute =
                     Route.parseUrl url
             in
-            ( { model | route = newRoute }, Cmd.none )
-                |> initCurrentPage
+            if newRoute /= model.route then
+                ( { model | route = newRoute }, Cmd.none )
+                    |> initCurrentPage
+
+            else
+                ( model, Cmd.none )
 
         ( LoginPageMsg subMsg, LoginPage pageModel ) ->
             let
@@ -113,7 +123,16 @@ update msg model =
             , Cmd.batch [ Cmd.map LoginPageMsg pageCmds ]
             )
 
-        ( _, _ ) ->
+        ( ListPostsPageMsg subMsg, ListPostsPage pageModel ) ->
+            let
+                ( updatedPageModel, pageCmds ) =
+                    ListPosts.update subMsg pageModel
+            in
+            ( { model | page = ListPostsPage updatedPageModel }
+            , Cmd.batch [ Cmd.map ListPostsPageMsg pageCmds ]
+            )
+
+        _ ->
             initCurrentPage ( model, Cmd.none )
 
 

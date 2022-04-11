@@ -1,9 +1,18 @@
-module Layout exposing (mainLayout)
+module Layout exposing (mainLayout, maybeRender)
 
 import Alert exposing (AlertParams)
 import Css exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (attribute, class, href, id, type_)
+
+
+maybeRender : Bool -> Html msg -> Html msg
+maybeRender render inner =
+    if render then
+        inner
+
+    else
+        text ""
 
 
 navbar : Html msg
@@ -12,7 +21,7 @@ navbar =
         [ class "navbar navbar-expand-lg navbar-dark bg-dark"
         ]
         [ div [ class "container-fluid" ]
-            [ a [ class "navbar-brand", href "#" ] [ text "Navbar" ]
+            [ a [ class "navbar-brand", href "/" ] [ text "Elm Blog" ]
             , button
                 [ class "navbar-toggler"
                 , type_ "button"
@@ -34,7 +43,7 @@ navbar =
         ]
 
 
-mainLayout : Html msg -> List AlertParams -> Html msg
+mainLayout : Html msg -> List (AlertParams msg) -> Html msg
 mainLayout inner alerts =
     div
         [ class "d-flex flex-column h-100"

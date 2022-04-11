@@ -1,12 +1,23 @@
-module HttpHelper exposing (apiUrl, getHttpErrorMessage)
+module HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, webDataFromResultDetailed)
 
+import Http
 import Http.Detailed
 import Json.Decode as Decode
+import RemoteData exposing (RemoteData(..))
 
 
 apiUrl : String
 apiUrl =
-    "http://localhost:3000"
+    "https://levy-spring-blog.herokuapp.com"
+
+
+apiEndpoint : String -> String
+apiEndpoint path =
+    if String.startsWith "/" path then
+        apiUrl ++ path
+
+    else
+        apiUrl ++ "/" ++ path
 
 
 type alias BodyWithMessage =
@@ -27,7 +38,7 @@ getMessageFromBody body =
             error.message
 
         Err _ ->
-            "Unknown error"
+            "Error with malformed JSON"
 
 
 getHttpErrorMessage : Http.Detailed.Error String -> String
@@ -45,5 +56,19 @@ getHttpErrorMessage error =
         Http.Detailed.BadStatus _ body ->
             getMessageFromBody body
 
-        Http.Detailed.BadBody _ body _ ->
-            getMessageFromBody body
+        Http.Detailed.BadBody _ _ _ ->
+            "Malformed JSON response"
+
+
+type alias WebDetailedData a =
+    RemoteData (Http.Detailed.Error String) a
+
+
+webDataFromResultDetailed : Result (Http.Detailed.Error String) ( Http.Metadata, a ) -> WebDetailedData a
+webDataFromResultDetailed result =
+    case result of
+        Ok ( _, value ) ->
+            RemoteData.Success value
+
+        Err error ->
+            RemoteData.Failure error

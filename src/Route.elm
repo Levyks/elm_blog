@@ -1,12 +1,13 @@
 module Route exposing (..)
 
+import Pagination exposing (pageParser)
 import Url exposing (Url)
 import Url.Parser exposing (..)
 
 
 type Route
     = NotFound
-    | Home
+    | ListPosts Int
     | Login
 
 
@@ -23,6 +24,7 @@ parseUrl url =
 matchRoute : Parser (Route -> a) a
 matchRoute =
     oneOf
-        [ map Home top
+        [ map ListPosts (top <?> pageParser)
+        , map ListPosts (s "posts" <?> pageParser)
         , map Login (s "login")
         ]
