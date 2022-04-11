@@ -4,7 +4,9 @@
   "description": "Simple blog web application written in [Elm](https://elm-lang.org).",
   "scripts": {
     "dev": "elm-live src/Main.elm --pushstate --dir=public/ -- --output=public/build/main.js",
-    "build": "elm make src/Main.elm --output=build/main.js"
+    "compile": "elm make src/Main.elm --output=public/build/main.js --optimize",
+    "minify": "uglifyjs public/build/main.js --compress \"pure_funcs=[F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9],pure_getters,keep_fargs=false,unsafe_comps,unsafe\" | uglifyjs --mangle --output public/build/main.min.js",
+    "build": "npm run compile && npm run minify"
   },
   "repository": {
     "type": "git",
@@ -19,6 +21,7 @@
   "homepage": "https://github.com/Levyks/elm_blog#readme",
   "devDependencies": {
     "elm": "^0.19.1-5",
-    "elm-live": "^4.0.2"
+    "elm-live": "^4.0.2",
+    "uglify-js": "^3.15.4"
   }
 }
