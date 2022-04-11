@@ -1,7 +1,6 @@
-module Login exposing (main)
+module Page.Login exposing (Model, Msg, init, title, update, view)
 
 import Alert exposing (AlertParams, AlertType(..))
-import Browser
 import Css exposing (..)
 import Form
 import Html.Styled exposing (..)
@@ -29,13 +28,15 @@ type alias LoginSuccessfulResult =
     }
 
 
-initialModel : Model
-initialModel =
-    { email = ""
-    , password = ""
-    , loading = False
-    , error = Nothing
-    }
+init : ( Model, Cmd Msg )
+init =
+    ( { email = ""
+      , password = ""
+      , loading = False
+      , error = Nothing
+      }
+    , Cmd.none
+    )
 
 
 formCard : Model -> Html Msg
@@ -114,6 +115,11 @@ getAlertsList model =
             [ AlertParams Danger msg True ]
 
 
+title : String
+title =
+    "Login | Elm Blog"
+
+
 view : Model -> Html Msg
 view model =
     mainLayout
@@ -183,13 +189,3 @@ update message model =
 
         SubmitResultReceived (Err err) ->
             ( { model | loading = False, error = Just (getHttpErrorMessage err) }, Cmd.none )
-
-
-main : Program () Model Msg
-main =
-    Browser.element
-        { init = \_ -> ( initialModel, Cmd.none )
-        , view = view >> toUnstyled
-        , update = update
-        , subscriptions = \_ -> Sub.none
-        }

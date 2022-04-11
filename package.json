@@ -1,0 +1,24 @@
+{
+  "name": "elm_blog",
+  "version": "1.0.0",
+  "description": "Simple blog web application written in [Elm](https://elm-lang.org).",
+  "scripts": {
+    "dev": "elm-live src/Main.elm --pushstate --dir=public/ -- --output=public/build/main.js",
+    "build": "elm make src/Main.elm --output=build/main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Levyks/elm_blog.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Levyks/elm_blog/issues"
+  },
+  "homepage": "https://github.com/Levyks/elm_blog#readme",
+  "devDependencies": {
+    "elm": "^0.19.1-5",
+    "elm-live": "^4.0.2"
+  }
+}
