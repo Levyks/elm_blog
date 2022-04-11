@@ -2,7 +2,6 @@ module Login exposing (main)
 
 import Browser
 import Css exposing (..)
-import Debug exposing (log)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (class, css)
 import Html.Styled.Events exposing (onClick, onSubmit)
@@ -10,7 +9,8 @@ import Http
 import Http.Detailed
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Misc exposing (apiUrl, formInput, getHttpErrorMessage)
+import Layout exposing (mainLayout)
+import Misc exposing (AlertParams, AlertType(..), apiUrl, formInput, getHttpErrorMessage)
 
 
 type alias Model =
@@ -102,45 +102,34 @@ formCard model =
         ]
 
 
-alertsDiv : Model -> Html Msg
-alertsDiv model =
+getAlertsList : Model -> List AlertParams
+getAlertsList model =
     case model.error of
         Nothing ->
-            div [] []
+            []
 
         Just msg ->
-            div
-                [ class "alert alert-danger alert-dismissible"
-                , css
-                    [ width (pct 100)
-                    ]
-                ]
-                [ text msg
-                , button
-                    [ class "btn-close"
-                    , onClick HandleErrorAlertClose
-                    ]
-                    []
-                ]
+            [ AlertParams Danger msg True ]
 
 
 view : Model -> Html Msg
 view model =
-    div
-        [ class "container"
-        , css
-            [ displayFlex
-            , flexDirection column
-            , alignItems center
-            , justifyContent spaceBetween
-            , height (pct 100)
-            , padding (px 20)
+    mainLayout
+        (div
+            [ class "container"
+            , css
+                [ displayFlex
+                , flexDirection column
+                , alignItems center
+                , justifyContent center
+                , height (pct 100)
+                , padding (px 20)
+                ]
             ]
-        ]
-        [ alertsDiv model
-        , formCard model
-        , div [] []
-        ]
+            [ formCard model
+            ]
+        )
+        (getAlertsList model)
 
 
 type Msg

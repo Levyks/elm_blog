@@ -1,4 +1,4 @@
-module Misc exposing (apiUrl, formInput, getHttpErrorMessage)
+module Misc exposing (AlertParams, AlertType(..), apiUrl, formInput, getAlertClass, getHttpErrorMessage)
 
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (class, disabled, for, id, type_, value)
@@ -78,3 +78,33 @@ getHttpErrorMessage error =
 
         Http.Detailed.BadBody _ body _ ->
             getMessageFromBody body
+
+
+type AlertType
+    = Success
+    | Info
+    | Warning
+    | Danger
+
+
+type alias AlertParams =
+    { type_ : AlertType
+    , message : String
+    , dismissable : Bool
+    }
+
+
+getAlertClass : AlertParams -> String
+getAlertClass alert =
+    case alert.type_ of
+        Success ->
+            "alert-success"
+
+        Info ->
+            "alert-info"
+
+        Warning ->
+            "alert-warning"
+
+        Danger ->
+            "alert-danger"
