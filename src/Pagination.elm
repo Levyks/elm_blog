@@ -88,7 +88,11 @@ getPageBtnsParams pagination =
         ( hasLastBtn, hasLastEllipsis ) =
             shouldHaveLastBtn pagination middle
     in
-    PageBtnsParams hasFirstBtn hasFirstEllipsis middle hasLastEllipsis hasLastBtn
+    if pagination.totalPages == 0 then
+        PageBtnsParams False False [ 1 ] False False
+
+    else
+        PageBtnsParams hasFirstBtn hasFirstEllipsis middle hasLastEllipsis hasLastBtn
 
 
 buttons : Pagination a -> Html msg
