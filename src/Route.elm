@@ -1,5 +1,6 @@
 module Route exposing (..)
 
+import Debug
 import Pagination exposing (pageParser)
 import Url exposing (Url)
 import Url.Parser exposing (..)
@@ -11,9 +12,18 @@ type Route
     | Login
 
 
-parseUrl : Url -> Route
-parseUrl url =
-    case parse matchRoute url of
+removeBase : String -> Url -> Url
+removeBase base url =
+    let
+        path =
+            String.right (String.length url.path - String.length base + 1) url.path
+    in
+    Url url.protocol url.host url.port_ path url.query url.fragment
+
+
+parseUrl : String -> Url -> Route
+parseUrl baseUrl url =
+    case parse matchRoute (removeBase baseUrl url) of
         Just route ->
             route
 

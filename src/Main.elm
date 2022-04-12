@@ -4,6 +4,7 @@ import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Css exposing (url)
 import Html.Styled as Html
+import Html.Styled.Attributes exposing (href)
 import Page.ListPosts as ListPosts
 import Page.Login as Login
 import Route exposing (Route(..))
@@ -15,6 +16,7 @@ type alias Model =
     , page : Page
     , title : String
     , navKey : Nav.Key
+    , baseUrl : String
     }
 
 
@@ -58,14 +60,15 @@ initCurrentPage ( model, existingCmds ) =
     )
 
 
-init : () -> Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ url navKey =
+init : String -> Url -> Nav.Key -> ( Model, Cmd Msg )
+init baseUrl url navKey =
     let
         model =
-            { route = Route.parseUrl url
+            { route = Route.parseUrl baseUrl url
             , page = NotFoundPage
             , title = ""
             , navKey = navKey
+            , baseUrl = baseUrl
             }
     in
     initCurrentPage ( model, Cmd.none )
@@ -82,7 +85,7 @@ currentView : Model -> Html.Html Msg
 currentView model =
     case model.page of
         NotFoundPage ->
-            Html.text "404"
+            Html.a [ href "posts/" ] [ Html.text "404" ]
 
         ListPostsPage pageModel ->
             ListPosts.view pageModel |> Html.map ListPostsPageMsg
@@ -105,7 +108,7 @@ update msg model =
         ( UrlChanged url, _ ) ->
             let
                 newRoute =
-                    Route.parseUrl url
+                    Route.parseUrl model.baseUrl url
             in
             if newRoute /= model.route then
                 ( { model | route = newRoute }, Cmd.none )
@@ -136,7 +139,7 @@ update msg model =
             initCurrentPage ( model, Cmd.none )
 
 
-main : Program () Model Msg
+main : Program String Model Msg
 main =
     Browser.application
         { init = init
