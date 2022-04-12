@@ -21,7 +21,7 @@ navbar =
         [ class "navbar navbar-expand-lg navbar-dark bg-dark"
         ]
         [ div [ class "container-fluid" ]
-            [ a [ class "navbar-brand", href "/" ] [ text "Elm Blog" ]
+            [ a [ class "navbar-brand", href "" ] [ text "Elm Blog" ]
             , button
                 [ class "navbar-toggler"
                 , type_ "button"
