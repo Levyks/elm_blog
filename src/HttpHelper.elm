@@ -1,4 +1,4 @@
-module HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, webDataFromResultDetailed)
+module HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sortAscParam, sortDescParam, webDataFromResultDetailed)
 
 import Http
 import Http.Detailed
@@ -72,3 +72,46 @@ webDataFromResultDetailed result =
 
         Err error ->
             RemoteData.Failure error
+
+
+searchParam : String -> ( String, String )
+searchParam param =
+    if String.isEmpty param then
+        ( "", "" )
+
+    else
+        ( "q", param )
+
+
+pageParam : Int -> ( String, String )
+pageParam page =
+    ( "page", String.fromInt (page - 1) )
+
+
+sortDescParam : String -> ( String, String )
+sortDescParam param =
+    ( "sort", param ++ ",DESC" )
+
+
+sortAscParam : String -> ( String, String )
+sortAscParam param =
+    ( "sort", param ++ ",ASC" )
+
+
+isKeyNotEmpty : ( String, String ) -> Bool
+isKeyNotEmpty ( key, _ ) =
+    not (String.isEmpty key)
+
+
+mapQueryKeyValue : ( String, String ) -> String
+mapQueryKeyValue ( key, value ) =
+    key ++ "=" ++ value
+
+
+getQueryString : List ( String, String ) -> String
+getQueryString query =
+    if List.isEmpty query then
+        ""
+
+    else
+        "?" ++ String.join "&" (query |> List.filter isKeyNotEmpty |> List.map mapQueryKeyValue)

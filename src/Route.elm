@@ -1,14 +1,14 @@
 module Route exposing (..)
 
-import Debug
 import Pagination exposing (pageParser)
 import Url exposing (Url)
 import Url.Parser exposing (..)
+import Url.Parser.Query as Query
 
 
 type Route
     = NotFound
-    | ListPosts Int
+    | ListPosts Int String
     | Login
 
 
@@ -31,10 +31,15 @@ parseUrl baseUrl url =
             NotFound
 
 
+searchParser : Query.Parser String
+searchParser =
+    Query.map (Maybe.withDefault "") (Query.string "q")
+
+
 matchRoute : Parser (Route -> a) a
 matchRoute =
     oneOf
-        [ map ListPosts (top <?> pageParser)
-        , map ListPosts (s "posts" <?> pageParser)
+        [ map ListPosts (top <?> pageParser <?> searchParser)
+        , map ListPosts (s "posts" <?> pageParser <?> searchParser)
         , map Login (s "login")
         ]

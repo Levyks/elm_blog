@@ -95,54 +95,54 @@ getPageBtnsParams pagination =
         PageBtnsParams hasFirstBtn hasFirstEllipsis middle hasLastEllipsis hasLastBtn
 
 
-buttons : Pagination a -> Html msg
-buttons pag =
+buttons : Pagination a -> (Int -> String) -> Html msg
+buttons pag getHref =
     let
         params =
             getPageBtnsParams pag
     in
     nav []
         [ ul [ class "pagination justify-content-center mt-3" ]
-            (buildPaginationBtnsHead pag params
-                ++ List.map (mapPageBtn pag) params.middle
-                ++ buildPaginationBtnsTail pag params
+            (buildPaginationBtnsHead pag getHref params
+                ++ List.map (mapPageBtn pag getHref) params.middle
+                ++ buildPaginationBtnsTail pag getHref params
             )
         ]
 
 
-buildPaginationBtnsHead : Pagination a -> PageBtnsParams -> List (Html msg)
-buildPaginationBtnsHead pag params =
-    [ viewPageBtn "«" pag.number False pag.first
-    , maybeRender params.hasFirstBtn (viewPageBtn "1" (pag.totalPages - 1) (pag.number == 0) False)
-    , maybeRender params.hasFirstEllipsis (viewPageBtn "..." 0 False True)
+buildPaginationBtnsHead : Pagination a -> (Int -> String) -> PageBtnsParams -> List (Html msg)
+buildPaginationBtnsHead pag getHref params =
+    [ viewPageBtn "«" (getHref (pag.number + 1)) False pag.first
+    , maybeRender params.hasFirstBtn (viewPageBtn "1" (getHref pag.totalPages) (pag.number == 0) False)
+    , maybeRender params.hasFirstEllipsis (viewPageBtn "..." "" False True)
     ]
 
 
-buildPaginationBtnsTail : Pagination a -> PageBtnsParams -> List (Html msg)
-buildPaginationBtnsTail pag params =
-    [ maybeRender params.hasLastEllipsis (viewPageBtn "..." 0 False True)
-    , maybeRender params.hasLastBtn (viewPageBtn (String.fromInt pag.totalPages) (pag.totalPages - 1) (pag.number == 0) False)
-    , viewPageBtn "»" (pag.number + 2) False pag.last
+buildPaginationBtnsTail : Pagination a -> (Int -> String) -> PageBtnsParams -> List (Html msg)
+buildPaginationBtnsTail pag getHref params =
+    [ maybeRender params.hasLastEllipsis (viewPageBtn "..." "" False True)
+    , maybeRender params.hasLastBtn (viewPageBtn (String.fromInt pag.totalPages) (getHref pag.totalPages) (pag.number == 0) False)
+    , viewPageBtn "»" (getHref (pag.number + 3)) False pag.last
     ]
 
 
-viewPageBtn : String -> Int -> Bool -> Bool -> Html msg
-viewPageBtn label goto active disabled =
+viewPageBtn : String -> String -> Bool -> Bool -> Html msg
+viewPageBtn label pageHref active disabled =
     li
         [ class "page-item"
         , classList [ ( "active", active ), ( "disabled", disabled ) ]
         ]
         [ a
             [ class "page-link"
-            , href ("?page=" ++ String.fromInt goto)
+            , href pageHref
             ]
             [ text label ]
         ]
 
 
-mapPageBtn : Pagination a -> Int -> Html msg
-mapPageBtn pag page =
-    viewPageBtn (String.fromInt page) page ((pag.number + 1) == page) False
+mapPageBtn : Pagination a -> (Int -> String) -> Int -> Html msg
+mapPageBtn pag getHref page =
+    viewPageBtn (String.fromInt page) (getHref (page + 1)) ((pag.number + 1) == page) False
 
 
 pageParser : Query.Parser Int

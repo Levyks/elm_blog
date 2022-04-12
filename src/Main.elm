@@ -41,10 +41,10 @@ initCurrentPage ( model, existingCmds ) =
                 Route.NotFound ->
                     ( NotFoundPage, Cmd.none, "Not Found" )
 
-                Route.ListPosts page ->
+                Route.ListPosts page search ->
                     let
                         ( pageModel, pageCmds ) =
-                            ListPosts.init page
+                            ListPosts.init page search
                     in
                     ( ListPostsPage pageModel, Cmd.map ListPostsPageMsg pageCmds, ListPosts.title )
 

@@ -6,12 +6,13 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (class, css, href)
 import Http
 import Http.Detailed
-import HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, webDataFromResultDetailed)
+import HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sortDescParam, webDataFromResultDetailed)
 import Layout exposing (mainLayout)
 import Pagination exposing (Pagination, paginationDecoder)
+import Ports exposing (updateQueryParam)
 import Post exposing (BasicPost, basicPostDecoder)
 import RemoteData
-import UI exposing (viewSpinner)
+import UI exposing (viewSearchField, viewSpinner)
 import Util exposing (delay)
 
 
@@ -19,16 +20,18 @@ type alias Model =
     { posts : WebDetailedData (Pagination BasicPost)
     , page : Int
     , showDelayNotice : Bool
+    , search : String
     }
 
 
-init : Int -> ( Model, Cmd Msg )
-init page =
+init : Int -> String -> ( Model, Cmd Msg )
+init page search =
     ( { posts = RemoteData.Loading
       , page = page
       , showDelayNotice = False
+      , search = search
       }
-    , Cmd.batch [ fetchPosts page, scheduleDelayNotice ]
+    , Cmd.batch [ fetchPosts page search, scheduleDelayNotice ]
     )
 
 
@@ -41,18 +44,18 @@ view : Model -> Html Msg
 view model =
     mainLayout
         (div
-            [ class "container d-flex flex-column h-100"
+            [ class "container d-flex flex-column h-100 mt-3"
             ]
             [ h1 [ class "text-center" ] [ text "Posts" ]
-            , viewPosts model.posts model.showDelayNotice
+            , viewPosts model
             ]
         )
         []
 
 
-viewPosts : WebDetailedData (Pagination BasicPost) -> Bool -> Html Msg
-viewPosts posts showDelayNotice =
-    case posts of
+viewPosts : Model -> Html Msg
+viewPosts model =
+    case model.posts of
         RemoteData.NotAsked ->
             text ""
 
@@ -60,7 +63,7 @@ viewPosts posts showDelayNotice =
             div [ class "flex-grow-1 d-flex flex-column justify-content-center align-items-center" ]
                 [ viewSpinner 8 1.5
                 , span [ class "mt-5" ]
-                    [ if showDelayNotice then
+                    [ if model.showDelayNotice then
                         text "Heroku can take a few seconds on a cold start. Please wait."
 
                       else
@@ -72,18 +75,44 @@ viewPosts posts showDelayNotice =
             div [] [ text ("Error: " ++ getHttpErrorMessage err) ]
 
         RemoteData.Success postsPag ->
-            div
-                []
-                [ div
-                    [ css
-                        [ width (px 700)
-                        , maxWidth (calc (pct 100) minus (px 20))
-                        , margin2 (px 0) auto
-                        ]
-                    ]
-                    (List.map viewPost postsPag.content)
-                , Pagination.buttons postsPag
-                ]
+            viewPostsSuccess model postsPag
+
+
+getPageHref : Model -> Int -> String
+getPageHref model page =
+    getQueryString
+        [ pageParam page
+        , searchParam model.search
+        ]
+
+
+viewPostsSuccess : Model -> Pagination BasicPost -> Html Msg
+viewPostsSuccess model posts =
+    div
+        []
+        [ viewPostsHeader model
+        , viewPostsList posts.content
+        , Pagination.buttons posts (getPageHref model)
+        ]
+
+
+viewPostsHeader : Model -> Html Msg
+viewPostsHeader model =
+    div
+        [ class "d-flex justify-content-end mb-4" ]
+        [ viewSearchField SearchInput model.search ]
+
+
+viewPostsList : List BasicPost -> Html Msg
+viewPostsList posts =
+    div
+        [ css
+            [ width (px 700)
+            , maxWidth (calc (pct 100) minus (px 20))
+            , margin2 (px 0) auto
+            ]
+        ]
+        (List.map viewPost posts)
 
 
 viewPost : BasicPost -> Html Msg
@@ -111,12 +140,16 @@ type Msg
     = FetchPost
     | PostsReceived (WebDetailedData (Pagination BasicPost))
     | DelayNoticeReceived
+    | SearchInput String
+    | DelayedSearchInput String
 
 
-fetchPosts : Int -> Cmd Msg
-fetchPosts page =
+fetchPosts : Int -> String -> Cmd Msg
+fetchPosts page search =
     Http.get
-        { url = apiEndpoint ("posts?size=5&page=" ++ String.fromInt (page - 1))
+        { url =
+            apiEndpoint
+                ("posts" ++ getQueryString [ sortDescParam "createdAt", pageParam page, searchParam search, ( "size", "5" ) ])
         , expect =
             Http.Detailed.expectJson (webDataFromResultDetailed >> PostsReceived) (paginationDecoder basicPostDecoder)
         }
@@ -127,11 +160,21 @@ scheduleDelayNotice =
     delay 3000 DelayNoticeReceived
 
 
+searchDebounceMs : Float
+searchDebounceMs =
+    500
+
+
+scheduleDelayedSearchInput : String -> Cmd Msg
+scheduleDelayedSearchInput search =
+    delay searchDebounceMs (DelayedSearchInput search)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         FetchPost ->
-            ( model, Cmd.batch [ fetchPosts model.page, scheduleDelayNotice ] )
+            ( model, Cmd.batch [ fetchPosts model.page model.search, scheduleDelayNotice ] )
 
         PostsReceived response ->
             ( { model | posts = response }, Cmd.none )
@@ -143,3 +186,20 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+
+        SearchInput search ->
+            ( { model | search = search }, scheduleDelayedSearchInput search )
+
+        DelayedSearchInput debouncedSearch ->
+            if debouncedSearch == model.search then
+                ( { model | search = debouncedSearch }
+                , Cmd.batch
+                    [ fetchPosts 1 model.search
+                    , scheduleDelayNotice
+                    , updateQueryParam ( "q", model.search )
+                    , updateQueryParam ( "page", "1" )
+                    ]
+                )
+
+            else
+                ( model, Cmd.none )

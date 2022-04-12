@@ -1,8 +1,9 @@
-module UI exposing (viewSpinner)
+module UI exposing (viewIcon, viewSearchField, viewSpinner)
 
 import Css exposing (..)
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (class, css)
+import Html.Styled.Attributes exposing (class, css, placeholder, value)
+import Html.Styled.Events exposing (onInput)
 
 
 viewSpinner : Float -> Float -> Html msg
@@ -19,4 +20,32 @@ viewSpinner size strokeWidth =
             [ class "visually-hidden"
             ]
             [ text "Loading..." ]
+        ]
+
+
+viewIcon : String -> Html msg
+viewIcon icon =
+    span
+        [ class "material-icons user-select-none"
+        ]
+        [ text icon ]
+
+
+viewSearchField : (String -> msg) -> String -> Html msg
+viewSearchField inputHandler search =
+    div
+        [ class "input-group"
+        , css
+            [ maxWidth (rem 20)
+            ]
+        ]
+        [ input
+            [ class "form-control"
+            , placeholder "Search"
+            , onInput inputHandler
+            , value search
+            ]
+            []
+        , span [ class "input-group-text" ]
+            [ viewIcon "search" ]
         ]
