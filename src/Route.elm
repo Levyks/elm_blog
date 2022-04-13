@@ -1,9 +1,8 @@
 module Route exposing (..)
 
-import Pagination exposing (pageParser)
+import Pagination exposing (pageParser, searchParser)
 import Url exposing (Url)
 import Url.Parser exposing (..)
-import Url.Parser.Query as Query
 
 
 type Route
@@ -29,11 +28,6 @@ parseUrl baseUrl url =
 
         Nothing ->
             NotFound
-
-
-searchParser : Query.Parser String
-searchParser =
-    Query.map (Maybe.withDefault "") (Query.string "q")
 
 
 matchRoute : Parser (Route -> a) a

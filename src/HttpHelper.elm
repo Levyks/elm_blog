@@ -1,4 +1,4 @@
-module HttpHelper exposing (SortDirection(..), WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sizeParam, sortAscParam, sortDescParam, sortParam, webDataFromResultDetailed)
+module HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, webDataFromResultDetailed)
 
 import Http
 import Http.Detailed
@@ -72,54 +72,6 @@ webDataFromResultDetailed result =
 
         Err error ->
             RemoteData.Failure error
-
-
-searchParam : String -> ( String, String )
-searchParam param =
-    if String.isEmpty param then
-        ( "", "" )
-
-    else
-        ( "q", param )
-
-
-pageParam : Int -> ( String, String )
-pageParam page =
-    ( "page", String.fromInt page )
-
-
-type SortDirection
-    = ASC
-    | DESC
-
-
-sortDescParam : String -> ( String, String )
-sortDescParam param =
-    sortParam DESC param
-
-
-sortAscParam : String -> ( String, String )
-sortAscParam param =
-    sortParam ASC param
-
-
-sortParam : SortDirection -> String -> ( String, String )
-sortParam direction param =
-    let
-        directionString =
-            case direction of
-                ASC ->
-                    "ASC"
-
-                DESC ->
-                    "DESC"
-    in
-    ( "sort", param ++ "," ++ directionString )
-
-
-sizeParam : Int -> ( String, String )
-sizeParam size =
-    ( "size", String.fromInt size )
 
 
 isKeyNotEmpty : ( String, String ) -> Bool

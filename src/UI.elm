@@ -1,4 +1,4 @@
-module UI exposing (viewIcon, viewSearchField, viewSpinner)
+module UI exposing (viewDelayNotice, viewIcon, viewSearchField, viewSpinner)
 
 import Css exposing (..)
 import Html.Styled exposing (..)
@@ -20,6 +20,13 @@ viewSpinner size strokeWidth =
             [ class "visually-hidden"
             ]
             [ text "Loading..." ]
+        ]
+
+
+viewDelayNotice : Html msg
+viewDelayNotice =
+    span [ class "mt-5 appear-after-delay" ]
+        [ text "Heroku can take a few seconds on a cold start. Please wait."
         ]
 
 

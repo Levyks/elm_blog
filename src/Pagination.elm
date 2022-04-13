@@ -1,13 +1,16 @@
-module Pagination exposing (Pagination, fetchPage, pageParser, paginationDecoder, viewPageBtns)
+module Pagination exposing (Pagination, SortDirection(..), fetchPage, getPageHref, pageParser, paginationDecoder, searchParser, viewPageBtns, viewPaginationData, viewPaginationRemoteData)
 
+import Css
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (class, href)
+import Html.Styled.Attributes exposing (class, css, href)
 import Http
 import Http.Detailed
-import HttpHelper exposing (SortDirection, WebDetailedData, apiEndpoint, getQueryString, pageParam, searchParam, sizeParam, sortParam, webDataFromResultDetailed)
+import HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, webDataFromResultDetailed)
 import Json.Decode as Decode exposing (Decoder, bool, int, list)
 import Json.Decode.Pipeline exposing (required)
 import Ports exposing (updateQueryParam)
+import RemoteData
+import UI exposing (viewDelayNotice, viewSearchField, viewSpinner)
 import Url.Parser.Query as Query
 import Util exposing (getLast)
 
@@ -39,12 +42,175 @@ paginationDecoder decoder =
         |> required "empty" bool
 
 
+type alias FetchPageParamas a msg =
+    { endpoint : String
+    , decoder : Decoder a
+    , msg : WebDetailedData (Pagination a) -> msg
+    , page : Int
+    , search : String
+    , size : Int
+    , sort : ( String, SortDirection )
+    }
+
+
+fetchPage : FetchPageParamas a msg -> Cmd msg
+fetchPage params =
+    Cmd.batch
+        [ Http.get
+            { url =
+                apiEndpoint
+                    (params.endpoint
+                        ++ getQueryString
+                            [ sortParam (Tuple.second params.sort) (Tuple.first params.sort)
+                            , sizeParam params.size
+                            , pageParam (params.page - 1)
+                            , searchParam params.search
+                            ]
+                    )
+            , expect =
+                Http.Detailed.expectJson (webDataFromResultDetailed >> params.msg) (paginationDecoder params.decoder)
+            }
+        , updateQueryParam ( "q", params.search )
+        , updateQueryParam ( "page", String.fromInt params.page )
+        ]
+
+
+
+-- <Params>
+
+
+pageParser : Query.Parser Int
+pageParser =
+    Query.map (Maybe.withDefault 1) (Query.int "page")
+
+
+searchParser : Query.Parser String
+searchParser =
+    Query.map (Maybe.withDefault "") (Query.string "q")
+
+
+pageParam : Int -> ( String, String )
+pageParam page =
+    ( "page", String.fromInt page )
+
+
+sizeParam : Int -> ( String, String )
+sizeParam size =
+    ( "size", String.fromInt size )
+
+
+searchParam : String -> ( String, String )
+searchParam param =
+    if String.isEmpty param then
+        ( "", "" )
+
+    else
+        ( "q", param )
+
+
+type SortDirection
+    = ASC
+    | DESC
+
+
+sortParam : SortDirection -> String -> ( String, String )
+sortParam direction param =
+    let
+        directionString =
+            case direction of
+                ASC ->
+                    "ASC"
+
+                DESC ->
+                    "DESC"
+    in
+    ( "sort", param ++ "," ++ directionString )
+
+
+getPageHref : String -> Int -> String
+getPageHref search page =
+    getQueryString
+        [ pageParam page
+        , searchParam search
+        ]
+
+
+
+-- </Params>
+
+
+type alias ViewPaginationDataParams a msg =
+    { view : a -> Html msg
+    , pagination : Pagination a
+    , search : String
+    , onSearchInput : String -> msg
+    }
+
+
+viewPaginationData : ViewPaginationDataParams a msg -> Html msg
+viewPaginationData params =
+    div []
+        [ div
+            [ class "d-flex justify-content-end mb-4" ]
+            [ viewSearchField params.onSearchInput params.search ]
+        , div
+            [ css
+                [ Css.width (Css.px 700)
+                , Css.maxWidth (Css.calc (Css.pct 100) Css.minus (Css.px 20))
+                , Css.margin2 (Css.px 0) Css.auto
+                ]
+            ]
+            (List.map params.view params.pagination.content)
+        , viewPageBtns params.pagination (getPageHref params.search)
+        ]
+
+
+type alias ViewPaginationRemoteDataParams a msg =
+    { title : String
+    , view : a -> Html msg
+    , data : WebDetailedData (Pagination a)
+    , search : String
+    , onSearchInput : String -> msg
+    }
+
+
+viewPaginationRemoteData : ViewPaginationRemoteDataParams a msg -> Html msg
+viewPaginationRemoteData params =
+    div
+        [ class "container d-flex flex-column h-100 mt-3"
+        ]
+        [ h1 [ class "text-center" ] [ text params.title ]
+        , case params.data of
+            RemoteData.NotAsked ->
+                text ""
+
+            RemoteData.Loading ->
+                div [ class "flex-grow-1 d-flex flex-column justify-content-center align-items-center" ]
+                    [ viewSpinner 8 1.5
+                    , viewDelayNotice
+                    ]
+
+            RemoteData.Failure err ->
+                div [] [ text ("Error: " ++ getHttpErrorMessage err) ]
+
+            RemoteData.Success pagination ->
+                viewPaginationData
+                    { pagination = pagination
+                    , search = params.search
+                    , onSearchInput = params.onSearchInput
+                    , view = params.view
+                    }
+        ]
+
+
+
+-- <Page Buttons>
+
+
 type PageBtnDescription
     = Ellipsis
     | Numbered Int
     | Previous
-    | First
-    | Last
     | Next
 
 
@@ -59,10 +225,10 @@ getPageBtnsHead middle =
     case List.head middle of
         Just (Numbered page) ->
             if page > 2 then
-                [ First, Ellipsis ]
+                [ Numbered 1, Ellipsis ]
 
             else if page > 1 then
-                [ First ]
+                [ Numbered 1 ]
 
             else
                 []
@@ -76,10 +242,10 @@ getPageBtnsTail middle total =
     case getLast middle of
         Just (Numbered page) ->
             if page < total - 1 then
-                [ Ellipsis, Last ]
+                [ Ellipsis, Numbered total ]
 
             else if page < total then
-                [ Last ]
+                [ Numbered total ]
 
             else
                 []
@@ -150,12 +316,6 @@ viewPageBtnFromDescription pagination getHref pageBtnType =
             else
                 viewPageBtn (Disabled "»")
 
-        First ->
-            viewPageBtn (Normal "1" (getHref 1))
-
-        Last ->
-            viewPageBtn (Normal (String.fromInt pagination.totalPages) (getHref pagination.totalPages))
-
         Numbered page ->
             if page == current then
                 viewPageBtn (Active (String.fromInt page))
@@ -180,39 +340,5 @@ viewPageBtn btn =
             li [ class "page-item" ] [ a [ class "page-link", href link ] [ text label ] ]
 
 
-pageParser : Query.Parser Int
-pageParser =
-    Query.map (Maybe.withDefault 1) (Query.int "page")
 
-
-type alias FetchPageParamas a msg =
-    { endpoint : String
-    , decoder : Decoder a
-    , msg : WebDetailedData (Pagination a) -> msg
-    , page : Int
-    , search : String
-    , size : Int
-    , sort : ( String, SortDirection )
-    }
-
-
-fetchPage : FetchPageParamas a msg -> Cmd msg
-fetchPage params =
-    Cmd.batch
-        [ Http.get
-            { url =
-                apiEndpoint
-                    (params.endpoint
-                        ++ getQueryString
-                            [ sortParam (Tuple.second params.sort) (Tuple.first params.sort)
-                            , sizeParam params.size
-                            , pageParam (params.page - 1)
-                            , searchParam params.search
-                            ]
-                    )
-            , expect =
-                Http.Detailed.expectJson (webDataFromResultDetailed >> params.msg) (paginationDecoder params.decoder)
-            }
-        , updateQueryParam ( "q", params.search )
-        , updateQueryParam ( "page", String.fromInt params.page )
-        ]
+-- </Page Buttons>

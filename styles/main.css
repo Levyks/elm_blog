@@ -10,3 +10,13 @@ a {
     text-decoration: none;
     color: inherit;
 }
+
+@keyframes suddently-appear {
+    0%   { opacity: 0; }
+    75%  { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.appear-after-delay {
+    animation: suddently-appear 3s;
+}
