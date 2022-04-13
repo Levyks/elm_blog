@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Simple blog web application written in [Elm](https://elm-lang.org).",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 8000",
     "build": "vite build",
     "preview": "vite preview"
   },  
