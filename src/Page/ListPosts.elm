@@ -6,9 +6,9 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (class, css, href)
 import Http
 import Http.Detailed
-import HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sortDescParam, webDataFromResultDetailed)
+import HttpHelper exposing (SortDirection(..), WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sortDescParam, webDataFromResultDetailed)
 import Layout exposing (mainLayout)
-import Pagination exposing (Pagination, paginationDecoder)
+import Pagination exposing (Pagination, fetchPage, paginationDecoder, viewPageBtns)
 import Ports exposing (updateQueryParam)
 import Post exposing (BasicPost, basicPostDecoder)
 import RemoteData
@@ -92,7 +92,7 @@ viewPostsSuccess model posts =
         []
         [ viewPostsHeader model
         , viewPostsList posts.content
-        , Pagination.buttons posts (getPageHref model)
+        , viewPageBtns posts (getPageHref model)
         ]
 
 
@@ -146,12 +146,14 @@ type Msg
 
 fetchPosts : Int -> String -> Cmd Msg
 fetchPosts page search =
-    Http.get
-        { url =
-            apiEndpoint
-                ("posts" ++ getQueryString [ sortDescParam "createdAt", pageParam page, searchParam search, ( "size", "5" ) ])
-        , expect =
-            Http.Detailed.expectJson (webDataFromResultDetailed >> PostsReceived) (paginationDecoder basicPostDecoder)
+    fetchPage
+        { endpoint = "posts"
+        , page = page
+        , search = search
+        , size = 5
+        , sort = ( "createdAt", HttpHelper.DESC )
+        , decoder = basicPostDecoder
+        , msg = PostsReceived
         }
 
 
@@ -193,12 +195,7 @@ update msg model =
         DelayedSearchInput debouncedSearch ->
             if debouncedSearch == model.search then
                 ( { model | search = debouncedSearch }
-                , Cmd.batch
-                    [ fetchPosts 1 model.search
-                    , scheduleDelayNotice
-                    , updateQueryParam ( "q", model.search )
-                    , updateQueryParam ( "page", "1" )
-                    ]
+                , Cmd.batch [ fetchPosts 1 model.search, scheduleDelayNotice ]
                 )
 
             else

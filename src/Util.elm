@@ -1,7 +1,12 @@
-module Util exposing (delay)
+module Util exposing (delay, getLast)
 
 import Process
 import Task
+
+
+getLast : List a -> Maybe a
+getLast list =
+    List.head (List.reverse list)
 
 
 delay : Float -> msg -> Cmd msg

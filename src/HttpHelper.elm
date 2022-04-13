@@ -1,4 +1,4 @@
-module HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sortAscParam, sortDescParam, webDataFromResultDetailed)
+module HttpHelper exposing (SortDirection(..), WebDetailedData, apiEndpoint, getHttpErrorMessage, getQueryString, pageParam, searchParam, sizeParam, sortAscParam, sortDescParam, sortParam, webDataFromResultDetailed)
 
 import Http
 import Http.Detailed
@@ -85,17 +85,41 @@ searchParam param =
 
 pageParam : Int -> ( String, String )
 pageParam page =
-    ( "page", String.fromInt (page - 1) )
+    ( "page", String.fromInt page )
+
+
+type SortDirection
+    = ASC
+    | DESC
 
 
 sortDescParam : String -> ( String, String )
 sortDescParam param =
-    ( "sort", param ++ ",DESC" )
+    sortParam DESC param
 
 
 sortAscParam : String -> ( String, String )
 sortAscParam param =
-    ( "sort", param ++ ",ASC" )
+    sortParam ASC param
+
+
+sortParam : SortDirection -> String -> ( String, String )
+sortParam direction param =
+    let
+        directionString =
+            case direction of
+                ASC ->
+                    "ASC"
+
+                DESC ->
+                    "DESC"
+    in
+    ( "sort", param ++ "," ++ directionString )
+
+
+sizeParam : Int -> ( String, String )
+sizeParam size =
+    ( "size", String.fromInt size )
 
 
 isKeyNotEmpty : ( String, String ) -> Bool
