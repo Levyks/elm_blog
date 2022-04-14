@@ -8,6 +8,7 @@ import Html.Styled.Attributes exposing (href)
 import Page.ListPosts as ListPosts
 import Page.Login as Login
 import Page.ViewPost as ViewPost
+import Post exposing (BasicPost)
 import Route exposing (Route(..))
 import Url exposing (Url)
 
@@ -18,6 +19,7 @@ type alias Model =
     , title : String
     , navKey : Nav.Key
     , baseUrl : String
+    , selectedPost : Maybe BasicPost
     }
 
 
@@ -54,7 +56,7 @@ initCurrentPage ( model, existingCmds ) =
                 Route.ViewPost postId ->
                     let
                         ( pageModel, pageCmds ) =
-                            ViewPost.init postId
+                            ViewPost.init postId (ViewPost.getBasicPostIfTheSame model.selectedPost postId)
                     in
                     ( ViewPostPage pageModel, Cmd.map ViewPostPageMsg pageCmds, ViewPost.title )
 
@@ -79,6 +81,7 @@ init baseUrl url navKey =
             , title = ""
             , navKey = navKey
             , baseUrl = baseUrl
+            , selectedPost = Nothing
             }
     in
     initCurrentPage ( model, Cmd.none )
@@ -122,9 +125,17 @@ update msg model =
             let
                 newRoute =
                     Route.parseUrl model.baseUrl url
+
+                selected =
+                    case ( newRoute, model.page ) of
+                        ( Route.ViewPost postId, ListPostsPage listModel ) ->
+                            ListPosts.getPostById listModel postId
+
+                        _ ->
+                            Nothing
             in
             if newRoute /= model.route then
-                ( { model | route = newRoute }, Cmd.none )
+                ( { model | route = newRoute, selectedPost = selected }, Cmd.none )
                     |> initCurrentPage
 
             else

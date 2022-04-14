@@ -188,7 +188,7 @@ type alias ViewPaginationRemoteDataParams a msg =
 viewPaginationRemoteData : ViewPaginationRemoteDataParams a msg -> Html msg
 viewPaginationRemoteData params =
     div
-        [ class "container d-flex flex-column h-100"
+        [ class "flex-grow-1 container d-flex flex-column"
         ]
         [ h1 [ class "text-center" ] [ text params.title ]
         , case params.data of

@@ -1,4 +1,4 @@
-module Page.ListPosts exposing (Model, Msg, init, title, update, view)
+module Page.ListPosts exposing (Model, Msg, getPostById, init, title, update, view)
 
 import Css exposing (..)
 import DateTime
@@ -7,9 +7,9 @@ import Html.Styled.Attributes exposing (class, href)
 import HttpHelper exposing (WebDetailedData)
 import Layout exposing (mainLayout)
 import Pagination exposing (Pagination, fetchPage, viewPaginationRemoteData)
-import Post exposing (BasicPost, basicPostDecoder)
+import Post exposing (BasicPost, PostId, basicPostDecoder)
 import RemoteData
-import Util exposing (delay)
+import Util exposing (delay, getDataFromRemoteData)
 
 
 type alias Model =
@@ -114,3 +114,8 @@ update msg model =
 
             else
                 ( model, Cmd.none )
+
+
+getPostById : Model -> PostId -> Maybe BasicPost
+getPostById model id =
+    Maybe.andThen (\posts -> Util.find (\post -> post.id == id) posts.content) (getDataFromRemoteData model.posts)

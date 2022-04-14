@@ -1,4 +1,4 @@
-module Page.ViewPost exposing (Model, Msg, init, title, update, view)
+module Page.ViewPost exposing (Model, Msg, getBasicPostIfTheSame, init, title, update, view)
 
 import Category
 import Css exposing (..)
@@ -9,7 +9,7 @@ import Http
 import Http.Detailed
 import HttpHelper exposing (WebDetailedData, apiEndpoint, getHttpErrorMessage, webDataFromResultDetailed)
 import Layout exposing (mainLayout)
-import Post exposing (Post, PostId, postDecoder)
+import Post exposing (BasicPost, Post, PostId, postDecoder)
 import RemoteData
 import UI exposing (viewFullPageSpinner)
 import User
@@ -18,13 +18,15 @@ import User
 type alias Model =
     { id : PostId
     , post : WebDetailedData Post
+    , selected : Maybe BasicPost
     }
 
 
-init : PostId -> ( Model, Cmd Msg )
-init id =
+init : PostId -> Maybe BasicPost -> ( Model, Cmd Msg )
+init id selected =
     ( { id = id
       , post = RemoteData.Loading
+      , selected = selected
       }
     , fetchPost id
     )
@@ -43,7 +45,12 @@ view model =
                 text ""
 
             RemoteData.Loading ->
-                viewFullPageSpinner 8 1.5 True
+                case model.selected of
+                    Nothing ->
+                        viewFullPageSpinner 8 1.5 True
+
+                    Just basicPost ->
+                        viewBasicAndSpinner basicPost
 
             RemoteData.Failure err ->
                 -- TODO: show error
@@ -53,6 +60,16 @@ view model =
                 viewPost actualPost
         )
         []
+
+
+viewBasicAndSpinner : BasicPost -> Html Msg
+viewBasicAndSpinner basicPost =
+    div
+        [ class "flex-grow-1 container d-flex flex-column p-3"
+        ]
+        [ h1 [] [ text basicPost.title ]
+        , viewFullPageSpinner 8 1.5 True
+        ]
 
 
 viewPost : Post -> Html Msg
@@ -92,3 +109,16 @@ update msg model =
     case msg of
         PostReceived post ->
             ( { model | post = post }, Cmd.none )
+
+
+getBasicPostIfTheSame : Maybe BasicPost -> PostId -> Maybe BasicPost
+getBasicPostIfTheSame selected postId =
+    Maybe.andThen
+        (\post ->
+            if post.id == postId then
+                Just post
+
+            else
+                Nothing
+        )
+        selected
