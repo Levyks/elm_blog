@@ -3,13 +3,12 @@ module Page.ListPosts exposing (Model, Msg, init, title, update, view)
 import Css exposing (..)
 import DateTime
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (class, css, href)
-import HttpHelper exposing (WebDetailedData, getHttpErrorMessage)
+import Html.Styled.Attributes exposing (class, href)
+import HttpHelper exposing (WebDetailedData)
 import Layout exposing (mainLayout)
 import Pagination exposing (Pagination, fetchPage, viewPaginationRemoteData)
 import Post exposing (BasicPost, basicPostDecoder)
 import RemoteData
-import UI exposing (viewDelayNotice, viewSearchField, viewSpinner)
 import Util exposing (delay)
 
 
@@ -85,21 +84,16 @@ fetchPosts page search =
         { endpoint = "posts"
         , page = page
         , search = search
-        , size = 5
+        , size = 2
         , sort = ( "createdAt", Pagination.DESC )
         , decoder = basicPostDecoder
         , msg = PostsReceived
         }
 
 
-searchDebounceMs : Float
-searchDebounceMs =
-    500
-
-
 scheduleDelayedSearchInput : String -> Cmd Msg
 scheduleDelayedSearchInput search =
-    delay searchDebounceMs (DelayedSearchInput search)
+    delay 500 (DelayedSearchInput search)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
