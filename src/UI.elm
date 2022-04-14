@@ -1,4 +1,4 @@
-module UI exposing (viewDelayNotice, viewIcon, viewSearchField, viewSpinner)
+module UI exposing (viewDelayNotice, viewFullPageSpinner, viewIcon, viewSearchField, viewSpinner)
 
 import Css exposing (..)
 import Html.Styled exposing (..)
@@ -21,6 +21,19 @@ viewSpinner size strokeWidth =
             ]
             [ text "Loading..." ]
         ]
+
+
+viewFullPageSpinner : Float -> Float -> Bool -> Html msg
+viewFullPageSpinner size strokeWidth showDelayNotice =
+    div [ class "flex-grow-1 d-flex flex-column justify-content-center align-items-center" ]
+        (viewSpinner 8 1.5
+            :: (if showDelayNotice then
+                    [ viewDelayNotice ]
+
+                else
+                    []
+               )
+        )
 
 
 viewDelayNotice : Html msg

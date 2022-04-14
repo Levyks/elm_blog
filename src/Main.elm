@@ -7,6 +7,7 @@ import Html.Styled as Html
 import Html.Styled.Attributes exposing (href)
 import Page.ListPosts as ListPosts
 import Page.Login as Login
+import Page.ViewPost as ViewPost
 import Route exposing (Route(..))
 import Url exposing (Url)
 
@@ -23,6 +24,7 @@ type alias Model =
 type Page
     = NotFoundPage
     | ListPostsPage ListPosts.Model
+    | ViewPostPage ViewPost.Model
     | LoginPage Login.Model
 
 
@@ -31,6 +33,7 @@ type Msg
     | UrlChanged Url
     | LoginPageMsg Login.Msg
     | ListPostsPageMsg ListPosts.Msg
+    | ViewPostPageMsg ViewPost.Msg
 
 
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -47,6 +50,13 @@ initCurrentPage ( model, existingCmds ) =
                             ListPosts.init page search
                     in
                     ( ListPostsPage pageModel, Cmd.map ListPostsPageMsg pageCmds, ListPosts.title )
+
+                Route.ViewPost postId ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            ViewPost.init postId
+                    in
+                    ( ViewPostPage pageModel, Cmd.map ViewPostPageMsg pageCmds, ViewPost.title )
 
                 Route.Login ->
                     let
@@ -93,6 +103,9 @@ currentView model =
         LoginPage pageModel ->
             Login.view pageModel |> Html.map LoginPageMsg
 
+        ViewPostPage pageModel ->
+            ViewPost.view pageModel |> Html.map ViewPostPageMsg
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -133,6 +146,15 @@ update msg model =
             in
             ( { model | page = ListPostsPage updatedPageModel }
             , Cmd.batch [ Cmd.map ListPostsPageMsg pageCmds ]
+            )
+
+        ( ViewPostPageMsg subMsg, ViewPostPage pageModel ) ->
+            let
+                ( updatedPageModel, pageCmds ) =
+                    ViewPost.update subMsg pageModel
+            in
+            ( { model | page = ViewPostPage updatedPageModel }
+            , Cmd.batch [ Cmd.map ViewPostPageMsg pageCmds ]
             )
 
         _ ->

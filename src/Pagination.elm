@@ -1,4 +1,15 @@
-module Pagination exposing (Pagination, SortDirection(..), fetchPage, getPageHref, pageParser, paginationDecoder, searchParser, viewPageBtns, viewPaginationData, viewPaginationRemoteData)
+module Pagination exposing
+    ( Pagination
+    , SortDirection(..)
+    , fetchPage
+    , getPageHref
+    , pageParser
+    , paginationDecoder
+    , searchParser
+    , viewPageBtns
+    , viewPaginationData
+    , viewPaginationRemoteData
+    )
 
 import Css
 import Html.Styled exposing (..)
@@ -10,7 +21,7 @@ import Json.Decode as Decode exposing (Decoder, bool, int, list)
 import Json.Decode.Pipeline exposing (required)
 import Ports exposing (updateQueryParam)
 import RemoteData
-import UI exposing (viewDelayNotice, viewSearchField, viewSpinner)
+import UI exposing (viewDelayNotice, viewFullPageSpinner, viewSearchField, viewSpinner)
 import Url.Parser.Query as Query
 import Util exposing (getLast)
 
@@ -177,7 +188,7 @@ type alias ViewPaginationRemoteDataParams a msg =
 viewPaginationRemoteData : ViewPaginationRemoteDataParams a msg -> Html msg
 viewPaginationRemoteData params =
     div
-        [ class "container d-flex flex-column h-100 pt-3"
+        [ class "container d-flex flex-column h-100"
         ]
         [ h1 [ class "text-center" ] [ text params.title ]
         , case params.data of
@@ -185,12 +196,10 @@ viewPaginationRemoteData params =
                 text ""
 
             RemoteData.Loading ->
-                div [ class "flex-grow-1 d-flex flex-column justify-content-center align-items-center" ]
-                    [ viewSpinner 8 1.5
-                    , viewDelayNotice
-                    ]
+                viewFullPageSpinner 8 1.5 True
 
             RemoteData.Failure err ->
+                -- TODO: show error
                 div [] [ text ("Error: " ++ getHttpErrorMessage err) ]
 
             RemoteData.Success pagination ->

@@ -15,7 +15,6 @@ import Util exposing (delay)
 type alias Model =
     { posts : WebDetailedData (Pagination BasicPost)
     , page : Int
-    , showDelayNotice : Bool
     , search : String
     }
 
@@ -24,7 +23,6 @@ init : Int -> String -> ( Model, Cmd Msg )
 init page search =
     ( { posts = RemoteData.Loading
       , page = page
-      , showDelayNotice = False
       , search = search
       }
     , fetchPosts page search

@@ -1,6 +1,7 @@
 module Route exposing (..)
 
 import Pagination exposing (pageParser, searchParser)
+import Post exposing (PostId)
 import Url exposing (Url)
 import Url.Parser exposing (..)
 
@@ -8,6 +9,7 @@ import Url.Parser exposing (..)
 type Route
     = NotFound
     | ListPosts Int String
+    | ViewPost PostId
     | Login
 
 
@@ -35,5 +37,6 @@ matchRoute =
     oneOf
         [ map ListPosts (top <?> pageParser <?> searchParser)
         , map ListPosts (s "posts" <?> pageParser <?> searchParser)
+        , map ViewPost (s "posts" </> Post.idParser)
         , map Login (s "login")
         ]

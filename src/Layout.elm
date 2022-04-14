@@ -51,6 +51,6 @@ mainLayout inner alerts =
         [ navbar
         , div [ class "container mt-2" ] (List.map Alert.view alerts)
         , div
-            [ class "flex-grow-1" ]
+            [ class "flex-grow-1 d-flex flex-column pt-3" ]
             [ inner ]
         ]

@@ -1,9 +1,12 @@
-module Post exposing (BasicPost, Post, PostId, basicPostDecoder, getUrl, idToString, postDecoder)
+module Post exposing (BasicPost, Post, PostId, basicPostDecoder, getUrl, idParser, idToString, postDecoder)
 
-import Json.Decode as Decode exposing (Decoder, int, string)
+import Category exposing (BasicCategory, basicCategoryDecoder)
+import Json.Decode as Decode exposing (Decoder, bool, int, string)
 import Json.Decode.Extra exposing (datetime)
 import Json.Decode.Pipeline exposing (required)
 import Time
+import Url.Parser exposing (Parser, custom)
+import User exposing (BasicUser, basicUserDecoder)
 
 
 type PostId
@@ -20,6 +23,13 @@ idToString (PostId id) =
     String.fromInt id
 
 
+idParser : Parser (PostId -> a) a
+idParser =
+    custom "POSTID" <|
+        \postId ->
+            Maybe.map PostId (String.toInt postId)
+
+
 type alias BasicPost =
     { id : PostId
     , title : String
@@ -34,6 +44,11 @@ type alias Post =
     { id : PostId
     , title : String
     , content : String
+    , edited : Bool
+    , createdAt : Time.Posix
+    , updatedAt : Time.Posix
+    , author : BasicUser
+    , category : BasicCategory
     }
 
 
@@ -59,3 +74,8 @@ postDecoder =
         |> required "id" idDecoder
         |> required "title" string
         |> required "content" string
+        |> required "edited" bool
+        |> required "createdAt" datetime
+        |> required "updatedAt" datetime
+        |> required "author" basicUserDecoder
+        |> required "category" basicCategoryDecoder
