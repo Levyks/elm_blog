@@ -6,6 +6,8 @@ This project will use the API written in my other repo [Levyks/spring_blog](http
 
 This is a (probably long) work in progress, as I have never worked with Elm before.
 
+Hosted in [levyks.com/elm-blog](https://levyks.com/elm-blog)
+
 ## What is Elm?
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Elm_logo.svg/1024px-Elm_logo.svg.png" alt="Elm Logo" width="100"> 
